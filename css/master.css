@@ -1,0 +1,46 @@
+/* Generic pane rules */
+html, body {
+	margin: 0;
+	padding: 0;
+}
+.row, .col { overflow: hidden; position: absolute; }
+.row { left: 0; right: 0; }
+.col { top: 0; bottom: 0; }
+.scroll-x { overflow-x: auto; }
+.scroll-y { overflow-y: auto; }
+
+.header.row { height: 90px; top: 0; }
+.body.row { top: 90px; bottom: 0; }
+
+#header {
+	background: green;
+}
+
+#content {
+	background: blue;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+#contentinner {
+  position: absolute;
+  padding: 18px;
+  z-index: 1;
+}
+
+#titleblock {
+	float: left;
+	padding: 10px;
+}
+
+#infoblock {
+	float: right;
+	padding: 10px;
+}
+
+.block {
+	float: left;
+	background: red;
+	padding: 18px;
+	margin:  20px;
+}
