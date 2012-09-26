@@ -11,6 +11,12 @@ html, body {
 
 .header.row { height: 90px; top: 0; }
 .body.row { top: 90px; bottom: 0; }
+.footer.row {height:24px; bottom: 0; }
+
+#footer {
+	margin: 0;
+	padding: 0;
+}
 
 #header {
 	background: green;
@@ -18,7 +24,7 @@ html, body {
 
 #content {
 	background: blue;
-	overflow-x: auto;
+	overflow-x: hidden;
 	overflow-y: hidden;
 }
 
@@ -38,9 +44,21 @@ html, body {
 	padding: 10px;
 }
 
+
 .block {
 	float: left;
 	background: red;
 	padding: 18px;
 	margin:  20px;
 }
+
+#main-scroll {
+	background: orange;
+	height: 100%;
+}
+
+.main-scroll-bar {
+	background: red;
+}
+
+
