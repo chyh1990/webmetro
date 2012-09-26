@@ -9,9 +9,17 @@ html, body {
 .scroll-x { overflow-x: auto; }
 .scroll-y { overflow-y: auto; }
 
+.no-selection {
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+
 .header.row { height: 90px; top: 0; }
 .body.row { top: 90px; bottom: 0; }
-.footer.row {height:24px; bottom: 0; }
+.footer.row {height:18px; bottom: 0; }
 
 #footer {
 	margin: 0;

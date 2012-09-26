@@ -3,6 +3,7 @@ function getBlocksWidth(){
 	$('.block').each(function(){
 		w += $(this).outerWidth(true);
 	});
+	w += 40;
 	return w;
 }
 
@@ -18,6 +19,8 @@ function setBlocksHeight(){
 			_view: viewport,
 			_content: content,
 			_ratio: 1.0,
+			_wheelSpeed: 40,
+			
 			setDelta : function(delta){
 				this.setPosition(this._pos + delta);
 			},
@@ -48,15 +51,29 @@ function setBlocksHeight(){
 		this.css('margin', '0').css('padding', '0');
 		var bar = $('<div class="main-scroll-bar" style="margin:0;padding:0;"></div>').appendTo(this);
 		bar.css('height', '100%').css('position','absolute').css('top', '0');
+		bar.hide();
 		var myw = this.width();
 		var barw = vs / cs * myw;
 		bar.css('width', barw + 'px');
 		obj._bar = bar;
 		content.mousewheel(function(event, delta, deltaX, deltaY) {
+			if(obj._bar == null)
+				return;
 			var v = deltaX;
 			if(Math.abs(v)<0.00001)
 				v = -deltaY;
-		    obj.setDelta(v * 20);
+			if(obj._hideTimer){
+				window.clearTimeout(obj._hideTimer);
+			}else{
+				//show the bar
+				obj._bar.fadeIn('fast');
+			}
+			obj._hideTimer = window.setTimeout(function(){
+				//hide
+				obj._bar.fadeOut('fast');
+				obj._hideTimer = null;
+			}, 200);
+		    obj.setDelta(v * obj._wheelSpeed);
 			//console.log(delta, deltaX, deltaY);
 			event.preventDefault();
 		});		
