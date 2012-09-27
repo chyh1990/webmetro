@@ -8,7 +8,7 @@ function getBlocksWidth(){
 }
 
 function setBlocksHeight(){
-	var h = $('#content').innerHeight() - 120;
+	var h = $('#content').innerHeight() - 80;
 	$('.metroblock').height(h);
 }
 
@@ -146,9 +146,24 @@ function setBlocksHeight(){
         this.oWrapper    = root;
 		this.title = 'Unknown';
 		this.options = {
-			tileSize: 130,
+			tileSize: 150,
 			tileMargin: 10,
 		};
+		
+		function calcRowWidth(apps, rowidxs){
+			var s = 0;
+			for(var i=0;i<rowidxs.length;i++){
+				s += apps[rowidxs[i]].width;
+			}
+			return s;
+		}
+		
+		function sortRowsByWidth(apps, arr){
+			arr.sort(function(x,y){
+				return calcRowWidth(apps, y) - calcRowWidth(apps, x);
+			});
+			return arr;
+		}
 		
 		function arrangeBlocks(apps, rowCnt){
 			var l = [];
@@ -158,7 +173,7 @@ function setBlocksHeight(){
 				l[rc].push(i);
 				rc = (rc + 1) % rowCnt;
 			}
-			return l;
+			return sortRowsByWidth(apps, l);
 		}
 		
 		this.arrangeFunc = arrangeBlocks;
@@ -191,7 +206,8 @@ function setBlocksHeight(){
 					var wc = apps[idx].width;
 					var w  = wc * options.tileSize + (wc-1) * m;
 					var obj = $('<div class="metrosubblock"></div>').appendTo(root);
-					obj.width(w).height(options.tileSize).css('margin', strm).css('background', 'blue');
+					obj.width(w).height(options.tileSize).css('margin', strm).css('background', apps[idx].color);
+					$('<p>'+apps[idx].name+'</p>').appendTo(obj);
 					cwc += wc;
 				}
 				if(cwc > maxwc)
@@ -227,11 +243,15 @@ $(window).resize(function(){
 
 function genTest(){
 	var cnt = 2 + Math.floor(Math.random() * 8);
+	var colors = ['red', 'grey', 'orange', 'green', 'blue', 'white', 'yellow', 'purple'];
 	var s = '[';
 	for(var i=0;i<cnt;i++){
-		var t = '{"name":"A2", "width":';
+		var t = '{"name":"A'+i+'", "width":';
 		var w = 1 + Math.floor(Math.random() * 3);
+		var c = Math.floor(Math.random() * colors.length);
 		t += w;
+		t += ',';
+		t += '"color":"'+colors[c]+'"';
 		t += '}'
 		if(i!=0)
 			s += ',';
@@ -243,7 +263,7 @@ function genTest(){
 }
 
 $(document).ready(function(){
-	for(var i=0;i<2;i++){
+	for(var i=0;i<6;i++){
 		var obj = $('<div class="metroblock"></div>').appendTo('#contentinner').jMetroBlock();
 		obj.jMetroBlock('setContent', genTest());
 	}

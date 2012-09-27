@@ -104,14 +104,15 @@ body{
 
 .metroblock {
 	float: left;
-	background: red;
+	/*background: red;*/
 	padding: 0;
-	margin: 10px;
+	margin: 10px 30px 10px 30px;
 }
 
 .metrosubblock {
-	float: left;
+	display: inline-block;
 	padding: 0;
+	overflow: hidden;
 }
 
 #main-scroll {
