@@ -1,4 +1,9 @@
 Webmetro::Application.routes.draw do
+  match "logincb" => "bilibili#login_callback"
+  match 'logout'  => 'bilibili#logout'
+  match 'userinfo' => 'bilibili#get_user_info'
+  match 'bilibiliapi/list' => 'bilibili#api_list'
+  
   # The priority is based upon order of creation:
   # first created -> highest priority.
 
@@ -48,7 +53,7 @@ Webmetro::Application.routes.draw do
 
   # You can have the root of your site routed with "root"
   # just remember to delete public/index.html.
-  # root :to => 'welcome#index'
+  # root :to => 'bilibili#index'
 
   # See how all your routes lay out with "rake routes"
 
