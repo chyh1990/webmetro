@@ -6,7 +6,7 @@ html{
 
 
 body{
-	font-family: Arial, Helvetica, Verdana, Sans-serif;
+	font-family: 'Segoe UI Light', 'Segoe UI', 'Osaka', 'Lucida Grande',Verdana, Helvetica, Arial, Sans-serif;
 	font-size: 12px;
 }
 
@@ -40,9 +40,9 @@ body{
 	user-select: none;
 }
 
-.header.row { height: 90px; top: 0; }
-.body.row { top: 90px; bottom: 0; }
-.footer.row {height:12px; bottom: 0; }
+.header.row { height: 100px; top: 0; }
+.body.row { top: 100px; bottom: 20px; }
+.footer.row {height:20px; bottom: 0; }
 
 #wrapper {
 	background: transparent;
@@ -63,29 +63,32 @@ body{
 	overflow-y: hidden;
 }
 
-#contentinner {
-  position: absolute;
-  padding: 18px;
-  z-index: 1;
-}
+
 
 #titleblock {
 	float: left;
-	padding: 10px;
-	padding-left: 30px;
+	padding: 25px 0 40px 100px;
+	margin: 0;
+}
+
+#contentinner {
+  position: absolute;
+  margin: 30px 100px 10px 100px;
+  z-index: 1;
 }
 
 
 #titleblock h1 {
 	color: white;
-	font-size: 40px;
+	font-size: 55px;
+	font-weight: normal;
+	margin: 0;
 }
 
 #infoblock {
 	float: right;
 	text-align: right;
-	padding: 20px;
-	padding-right: 40px;
+	margin: 25px 100px 20px 20px;
 	color: white;
 }
 
@@ -98,30 +101,34 @@ body{
 	margin: 0 10px 5px 0;
 }
 
-#infoblock h2 {
+#infoblock p {
 	margin: 0 10px 0 0;
 }
 
 .metroblock {
 	float: left;
+	position: relative;
 	/*background: red;*/
 	padding: 0;
-	margin: 10px 30px 10px 30px;
+	margin-right: 40px;
 }
 
 .metrosubblock {
 	display: inline-block;
+	position: absolute;
 	padding: 0;
 	overflow: hidden;
+	margin: 0;
 }
 
 #main-scroll {
-	background: orange;
+	background: white;
+	opacity: 0.3;
 	height: 100%;
 }
 
 .main-scroll-bar {
-	background: red;
+	background: black;
 }
 
 

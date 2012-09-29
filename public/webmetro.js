@@ -1,14 +1,28 @@
+function getMarginOrPadding(elem, tag){
+	return parseInt(elem.css(tag).replace('px'));
+}
+
 function getBlocksWidth(){
 	var w = 0;
 	$('.metroblock').each(function(){
 		w += $(this).outerWidth(true);
 	});
-	w += 40;
+	if(w > 0){
+		w -= getMarginOrPadding($('.metroblock'), 'marginRight');
+	}
 	return w;
 }
 
+function setInnerWidth(){
+	var w = getBlocksWidth();
+	var l = getMarginOrPadding($('#contentinner'), 'marginLeft');
+	var r = getMarginOrPadding($('#contentinner'), 'marginRight');
+	//console.log(w+' '+l+' '+r)
+	$('#contentinner').width(w+l+r);
+}
+
 function setBlocksHeight(){
-	var h = $('#content').innerHeight() - 80;
+	var h = $('#content').height();
 	$('.metroblock').height(h);
 }
 
@@ -53,7 +67,12 @@ function setBlocksHeight(){
 				var barw = vs / cs * myw;
 				bar.css('width', barw + 'px');
 				if(resetPos)
-					this._pos = 0;
+					this._pos = 0;
+				else{
+					if(this._pos >= cs - vs)
+					this._pos = cs - vs - 0.01;
+				}
+				this.setPosition(this._pos);
 			}
 		};
 
@@ -128,7 +147,26 @@ function setBlocksHeight(){
 					data.obj.reinitialize();
 				}
 			});			
-		}
+		},
+		
+		
+		setVisibility: function(show){
+			return this.each(function(){
+				var $this = $(this),
+				data = $this.data('metroblk');
+				if(!data)
+					return;
+				$('.metrosubblock', $this).each(function(){
+					var caller = $(this);
+					setTimeout(function(){
+						if(show)
+							caller.fadeOut(200);
+						else
+							caller.fadeOut(200);
+					}, Math.random() * 300)
+				});
+			});
+		} 
 	};
 	$.fn.jMetroBlock = function(method){
 	    if ( methods[method] ) {
@@ -165,7 +203,8 @@ function setBlocksHeight(){
 			return arr;
 		}
 		
-		function arrangeBlocks(apps, rowCnt){
+		//fill row first
+		function arrangeBlocks0(apps, rowCnt){
 			var l = [];
 			var rc = 0;
 			for(var i=0;i<apps.length;i++){
@@ -176,7 +215,27 @@ function setBlocksHeight(){
 			return sortRowsByWidth(apps, l);
 		}
 		
-		this.arrangeFunc = arrangeBlocks;
+		//fill shortest
+		function arrangeBlocks1(apps, rowCnt){
+			if(rowCnt==0)
+				return null;
+			var l = [];
+			var shortRow = 0;
+			var rowW = [];
+			for(var i=rowCnt-1;i>=0;i--){
+				l[i] = [];
+				rowW[i] = 0;
+			}
+			
+			for(var i=0;i<apps.length;i++){
+				rowW[shortRow] += apps[i].width;
+				l[shortRow].push(i);
+				shortRow = rowW.indexOf(Math.min.apply(Math, rowW));
+			}
+			return sortRowsByWidth(apps, l);
+		}
+		
+		this.arrangeFunc = arrangeBlocks1;
 		
  		this.reinitialize = function(){
 			this.oWrapper.empty();
@@ -186,7 +245,7 @@ function setBlocksHeight(){
 			var options = this.options;
 			var apps = this._apps;
 			root.css('min-height', options.tileSize + options.tileMargin * 2);
-			var totalH = root.height();
+			var totalH = root.innerHeight() ;
 			var rowCnt = Math.floor((totalH - options.tileMargin) / (options.tileSize+options.tileMargin));
 			
 			//console.log('rowCnt: '+ rowCnt + ' ' + totalH);
@@ -201,12 +260,15 @@ function setBlocksHeight(){
 					continue;
 				var strm = m + 'px 0 0 ' + m + 'px';
 				var cwc = 0;
+				var x = m;
 				for(var col=0;col<arr[row].length;col++){
 					var idx = arr[row][col];
 					var wc = apps[idx].width;
 					var w  = wc * options.tileSize + (wc-1) * m;
 					var obj = $('<div class="metrosubblock"></div>').appendTo(root);
-					obj.width(w).height(options.tileSize).css('margin', strm).css('background', apps[idx].color);
+					obj.width(w).height(options.tileSize).css('background', apps[idx].color);
+					obj.css('top', (m + options.tileSize) * row + m).css('left', x);
+					x += w + m;
 					$('<p>'+apps[idx].name+'</p>').appendTo(obj);
 					cwc += wc;
 				}
@@ -234,20 +296,15 @@ function setBlocksHeight(){
 //global
 var scrollObj = null;
 
-$(window).resize(function(){
-	setBlocksHeight();
-	$('.metroblock').jMetroBlock('reinitialize');
-	if(scrollObj)
-		scrollObj.reinitialize(true);
-});
+
 
 function genTest(){
-	var cnt = 2 + Math.floor(Math.random() * 8);
+	var cnt = 1 + Math.floor(Math.random() * 9);
 	var colors = ['red', 'grey', 'orange', 'green', 'blue', 'white', 'yellow', 'purple'];
 	var s = '[';
 	for(var i=0;i<cnt;i++){
 		var t = '{"name":"A'+i+'", "width":';
-		var w = 1 + Math.floor(Math.random() * 3);
+		var w = 1 + Math.floor(Math.random() * 2);
 		var c = Math.floor(Math.random() * colors.length);
 		t += w;
 		t += ',';
@@ -263,7 +320,7 @@ function genTest(){
 }
 
 $(document).ready(function(){
-	for(var i=0;i<6;i++){
+	for(var i=0;i<8;i++){
 		var obj = $('<div class="metroblock"></div>').appendTo('#contentinner').jMetroBlock();
 		obj.jMetroBlock('setContent', genTest());
 	}
@@ -271,7 +328,18 @@ $(document).ready(function(){
 	//$('.metroblock').width(400);
 	
 	$('.metroblock').jMetroBlock('reinitialize');
-	$('#contentinner').width(getBlocksWidth());
+	setInnerWidth();
 	scrollObj = $('#main-scroll').jMainScroll($('#content'), $('#contentinner'));
-
+	
+	$(window).resize(function(){
+		setBlocksHeight();
+		$('.metroblock').jMetroBlock('reinitialize');
+		setInnerWidth();
+		if(scrollObj)
+			scrollObj.reinitialize(true);
+	});
+	
+	$('#titleblock').click(function(){
+		$('.metroblock').jMetroBlock('setVisibility', false);
+	});
 });
