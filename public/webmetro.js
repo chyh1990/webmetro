@@ -34,7 +34,7 @@ function getLabel(str, len) {
 
 function getBlocksWidth(){
 	var w = 0;
-	$('.metroblock').each(function(){
+	$('.metroblock', $('#contentinner')).each(function(){
 		w += $(this).outerWidth(true);
 	});
 	if(w > 0){
@@ -180,21 +180,29 @@ function setBlocksHeight(){
 		},
 		
 		
-		setVisibility: function(show){
+		setVisibility: function(show, callback){
 			return this.each(function(){
 				var $this = $(this),
 				data = $this.data('metroblk');
 				if(!data)
 					return;
+				if(show)
+					$this.show();
 				$('.metrosubblock', $this).each(function(){
 					var caller = $(this);
 					setTimeout(function(){
-						if(show)
-							caller.fadeOut(200);
+						if(show == true)
+							caller.fadeIn(100);
 						else
-							caller.fadeOut(200);
-					}, Math.random() * 300)
+							caller.fadeOut(100);
+					}, Math.random() * 200)
 				});
+				setTimeout(function(){
+					if(!show)
+						$this.hide();
+					if(callback)
+						callback($this);
+				}, 400);
 			});
 		} 
 	};
@@ -312,18 +320,48 @@ function setBlocksHeight(){
 						$('<p>'+apps[idx].name+'</p>').appendTo(obj);
 					}
 					obj.data('myapp', apps[idx]);
-					obj.click(function(){
-						var url = $(this).data('myapp')['url'];
-						if(!url)
-							return false;
-						window.open(url);
-						return false;
+					
+					obj.mouseenter(function(){
+						$(this).addClass('metrosubblock-over');
 					});
+					obj.mouseleave(function(){
+						$(this).removeClass('metrosubblock-over');
+					});
+					
+					if(apps[idx].onclick){
+						obj.click(function(){
+							var o = $(this).data('myapp');
+							if(o && o.onclick)
+								o.onclick(o);
+						});
+					}else{
+						obj.click(function(){
+							var url = $(this).data('myapp')['url'];
+							if(!url)
+								return false;
+							window.open(url);
+							return false;
+						});
+					}
 				}
 				if(cwc > maxwc)
 					maxwc = cwc;
 			}
 			root.width( maxwc * (options.tileSize + m) + m);
+			
+			//preload the image
+			$('img.lazyload', root).each(function(){
+				if($(this).attr('src') == $(this).attr('data-original')){
+					return;
+				}
+				var img = new Image();
+				var that = $(this);
+				img.onload = function(){
+					that.attr('src', that.attr('data-original'));
+				}
+				img.src = $(this).attr('data-original');
+
+			});
 		}
 		
 		this.setContentObject = function(apps){
@@ -355,6 +393,14 @@ function randomStyle(){
 	//			   ['#014A5B', '#025A70']];
 	//return colors[Math.floor(Math.random() * colors.length)];
 	return 'metroblkcolor'+Math.floor(Math.random()* 7 );
+}
+
+function refreshMetro(){
+	setBlocksHeight();
+	$('.metroblock', $('#contentinner')).jMetroBlock('reinitialize');
+	setInnerWidth();
+	if(scrollObj)
+		scrollObj.reinitialize(true);
 }
 
 
@@ -397,6 +443,8 @@ var Bilibili = {
 	userinfo: null,
 	PUBLIC_KEY: 'efbc894df29d3be9c08940be6f480a3d',
 	
+	state: 'START',
+	
 	getLoginURL: function(){
 		return 'https://secure.bilibili.tv/login.php?api=http://59.66.131.21:3000/logincb&hash=' + this.PUBLIC_KEY + '&ver=2';
 	},
@@ -413,7 +461,7 @@ var Bilibili = {
 		23: {"name": "Movie"}
 	},
 	
-	renderList: function (tid, data){
+	renderList: function (tid, data, insertPos){
 		var that = this;
 		function biliList2MetroApp(){
 			if(data['list']==null)
@@ -443,18 +491,20 @@ var Bilibili = {
 				return x._ranking - y._ranking;
 			});
 			
+			//console.log(data['name']);
+			
 			for(var i=0;i<cnt/4;i++){
 				l[i].width = 2;
 			}
-			
+			//we use lazyload plugin to load images
 			for(var i=0;i<cnt;i++){
 				if(l[i].width == 1){
 					var t=Math.floor(Math.random()*2)
 					switch(t){
 						case 0:
 						l[i].style += ' metro-block-content-w1-0';
-						l[i].html = $('<img></img>').addClass('metro-block-content-w1-0').attr('src', l[i]._bili['pic'])
-								.height(160).width(160).prop('outerHTML');
+						l[i].html = $('<img></img>').addClass('metro-block-content-w1-0 lazyload').attr('data-original', l[i]._bili['pic'])
+								.attr('src', 'images/loading150.gif').height(160).width(160).prop('outerHTML');
 						break;
 						case 1:
 							var o = $('<div>').addClass('metro-block-content-w1-1');
@@ -463,7 +513,9 @@ var Bilibili = {
 							var datestr = l[i]._bili['create'];
 							if(datestr)
 								datestr = datestr.split(/\s+/)[0];
-							$('<p></p>').addClass('video-info').text('Time: ' + l[i]._bili['duration']).appendTo(o);
+							else
+								datastr = '--';
+							$('<p></p>').addClass('video-info').text('Time: ' + (l[i]._bili['duration'] || '--')).appendTo(o);
 							$('<p></p>').addClass('video-info').text('Date: ' + datestr).appendTo(o);
 							l[i].html = o.prop('outerHTML');
 					}
@@ -471,10 +523,11 @@ var Bilibili = {
 					//l[i].html = '';
 				}else if(l[i].width == 2){
 					var o = $('<div>').addClass('metro-block-content-w2-0');
-					$('<img>').addClass('metro-block-content-w2-0-pv').attr('src', l[i]._bili['pic']).height(70).width(90).appendTo(o);
+					$('<img>').addClass('metro-block-content-w2-0-pv lazyload').attr('data-original', l[i]._bili['pic'])
+								.attr('src', 'images/loading90_70.gif').height(70).width(90).appendTo(o);
 					$('<div>').addClass('metro-block-content-w2-0-title video-title').text(l[i]['name']).appendTo(o);
 					var info = $('<div>').addClass('metro-block-content-w2-0-info video-info').appendTo(o);
-					$('<div>').addClass('metro-block-content-w2-0-info-sub').text('Time: ' + l[i]._bili['duration']).appendTo(info);
+					$('<div>').addClass('metro-block-content-w2-0-info-sub').text('Time: ' + (l[i]._bili['duration']||'--')).appendTo(info);
 					$('<div>').addClass('metro-block-content-w2-0-info-sub').text('Play: ' + l[i]._bili['play']).appendTo(info);
 					$('<div>').addClass('metro-block-content-w2-0-desc').text(l[i]._bili['description']).appendTo(o);
 					l[i].html = o.prop('outerHTML');
@@ -483,23 +536,28 @@ var Bilibili = {
 			
 			//build titleblock
 			if(!data['name']){
-				data['name'] = '?'
+				data['name'] = '?';
+				
 			}
 			var html = '';
 			var parent_style = "metro-title-block-text";
-			if(that.channels[tid]["icon"]){
+			if(tid>0 && that.channels[tid] && that.channels[tid]["icon"]){
 				html = '<img  class="metro-title-block-logo-child" src="'+that.channels[tid].icon+
 						'"></img><div class="metro-title-block-logo-child-text">'+data['name']+'</div>';
 				parent_style = "metro-title-block-logo";
 			}else{
-				html = '<div class="metro-title-block-text-child">'+data['name'].substr(0,5)+'</div>';
+				var name = data['name'] || '?'
+				html = '<div class="metro-title-block-text-child">'+name.substr(0,5)+'</div>';
 			}
 			var o = {
 					_ranking: 9999,
 					style: randomStyle() + " " + parent_style,
 					name:  data['name'],
 					html: html,
-					width:  2
+					width:  2,
+					onclick: function(o){
+						alert(o['name'])
+					}
 			};
 			l.push(o);
 			
@@ -510,6 +568,7 @@ var Bilibili = {
 			
 			return shuffle(l);
 		}
+		
 		if(!data)
 			return;
 		//console.log(data);
@@ -517,6 +576,19 @@ var Bilibili = {
 			return;
 		data._tid = tid;
 		//create big block
+
+		
+		var obj = $('<div class="metroblock"></div>')
+
+		obj.jMetroBlock();
+		obj.data('biliObj', data);
+		obj.jMetroBlock('setContentObject', biliList2MetroApp());
+	/*	obj.mouseenter(function(){
+			$("#title").fadeOut('fast', function() {
+			  $(this).text(obj.data('biliObj')['name']).fadeIn('fast');
+			});
+		});*/
+		
 		
 		//this code make sure the order of channels is determined
 		var afterMe = null;
@@ -529,22 +601,16 @@ var Bilibili = {
 			}
 		});
 		*/
-		
-		var obj = $('<div class="metroblock"></div>')
 		if(!afterMe)
-			obj.appendTo('#contentinner')
-		else
+			if(insertPos == 'front')
+				obj.prependTo('#contentinner');
+			else
+				obj.appendTo('#contentinner')
+		else{
 			obj.insertBefore(afterMe);
-		obj.jMetroBlock();
-		obj.data('biliObj', data);
-		obj.jMetroBlock('setContentObject', biliList2MetroApp(tid, data));
-	/*	obj.mouseenter(function(){
-			$("#title").fadeOut('fast', function() {
-			  $(this).text(obj.data('biliObj')['name']).fadeIn('fast');
-			});
-		});*/
-		
-		setBlocksHeight();
+		}
+		//setBlocksHeight();
+		obj.height($('#content').height());
 		obj.jMetroBlock('reinitialize');
 		setInnerWidth();
 		if(scrollObj)
@@ -573,7 +639,103 @@ var Bilibili = {
 			var cnt = 8 + Math.floor(Math.random()*12);
 			that.fetchList(key, cnt, 1, 'default');		
 		});
-	}
+	},
+	stateTable : {
+		'START':
+		{'SEARCH': function(){
+			
+			$('.metroblock', $('#contentinner')).jMetroBlock('setVisibility', false, function(){
+				$('.metroblock', $('#contentinner')).detach().prependTo('#hide-start');
+			});
+			$('#searchbox').show();
+		} } ,
+		
+		'SEARCH':
+		{'START': function(){
+			Bilibili.searchCancelled = true;
+			//remove all results
+			$('#contentinner').empty();
+			$('.metroblock', $('#hide-start')).detach().prependTo('#contentinner');
+			$('.metroblock', $('#contentinner')).jMetroBlock('setVisibility', true, function(){
+				refreshMetro();
+			});
+			$('#searchbox').hide();
+		
+		}},
+	},	
+	
+	transferTo: function(nextState){
+		if(this.state == nextState){
+			return;
+		}
+		if(this.stateTable[this.state][nextState]){
+			this.stateTable[this.state][nextState]();
+			var that = this;
+			$("#title").fadeOut(100, function() {
+			  that.state = nextState;
+			  var title = nextState.toLowerCase();
+			  title = title.substr(0,1).toUpperCase() + title.substr(1);
+			  $(this).text(title).fadeIn(100);
+			});
+		}else{
+			console.log('illegal transfer');
+		}
+		return;
+	},
+	
+	getState: function(){
+		return this.state;
+	},
+	
+	toggleSearch: function(){
+		if(this.state == 'START')
+			this.transferTo('SEARCH');
+		else
+			this.transferTo('START');
+	},
+	
+	searchCancelled: false,
+	
+	startSearch: function(keyword){
+		if(!keyword)
+			return;
+		$("#title").text('Search...');
+		this.searchCancelled = false;
+		var that = this;
+		$.getJSON('/bilibiliapi/search?keyword=' + keyword, function(data) {
+			if(that.searchCancelled){
+				return;
+			}
+			$("#title").text('Search');
+			if(!data || data['code'] != 0){
+				alert('failed');
+			}else{
+				data.list = data.result;
+				data['name'] = 'Find';
+				that.renderList(0, data, 'front');
+			}
+		});	
+	},
+	
+	init: function(){
+		var that = this;
+		$("#title").text('Start');
+		$("#searchbox").hide();
+		$('#search-text').keypress(function (e) {
+		  if (e.which == 13) {
+			that.startSearch($('#search-text').val());
+			$('#search-btn').focus();
+		    e.preventDefault();
+		  }
+		});
+		$('#search-btn').click(function(){that.startSearch($('#search-text').val())});
+	    $('#search-text').focus(function() { // select text on focus
+	        $(this).select(); 
+	    });
+	    $('#search-text').mouseup(function(e){ // fix for chrome and safari
+	        e.preventDefault();
+	    });
+	},
 	
 };
 
@@ -584,6 +746,8 @@ $(document).ready(function(){
 		obj.jMetroBlock('setContent', genTest());
 	}
 	*/
+	
+	Bilibili.init();
 	setBlocksHeight();
 	//$('.metroblock').width(400);
 	
@@ -592,15 +756,11 @@ $(document).ready(function(){
 	scrollObj = $('#main-scroll').jMainScroll($('#content'), $('#contentinner'));
 	
 	$(window).resize(function(){
-		setBlocksHeight();
-		$('.metroblock').jMetroBlock('reinitialize');
-		setInnerWidth();
-		if(scrollObj)
-			scrollObj.reinitialize(true);
+		refreshMetro();
 	});
 	
-	$('#titleblock').click(function(){
-		$('.metroblock').jMetroBlock('setVisibility', false);
+	$('#title').click(function(){
+		Bilibili.toggleSearch();
 	});
 	
 	$('#username').click(function(){

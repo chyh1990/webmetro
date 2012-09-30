@@ -17,7 +17,15 @@
 <img alt="full screen background image" src="images/green.jpg" id="full-screen-background-image"></img> 
 <div id="wrapper">
 <div id="header" class="header row">
-	<div id="titleblock"><h1 id="title">Start</h1></div>
+	<div id="titleblock">
+		<div class='align-left titletext'>
+		<h1 id="title">Start</h1>
+		</div>
+		<div id="searchbox">
+			<input type="text" class="border" id="search-text"></input>
+			<input type="button" class="btn" id="search-btn" value="&gt;"></input>
+		</div>
+	</div>
 	<div id="infoblock">
 		<div class="align-left">
 			<h1 id="username">Unknown</h1>
@@ -29,6 +37,7 @@
 <div id="content" class="body row">
 	<div id="contentinner">
 	</div>
+	<div id="hide-start" style="display:none"></div>
 </div>
 
 <div id="footer" class="footer row">

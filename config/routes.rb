@@ -4,6 +4,7 @@ Webmetro::Application.routes.draw do
   match 'userinfo' => 'bilibili#get_user_info'
   match 'channels' => 'bilibili#channels'
   match 'bilibiliapi/list' => 'bilibili#api_list'
+  match 'bilibiliapi/search' => 'bilibili#api_search'
   
   # The priority is based upon order of creation:
   # first created -> highest priority.

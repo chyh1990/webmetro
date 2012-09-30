@@ -16,12 +16,25 @@ class BilibiliController < ApplicationController
       render :text => 'error'
       return
     end
-		url = APIURL + 'list?tid=' + params[:tid]
+		url = APIURL + 'list?tid=' + params[:tid].to_i.to_s
 		url += '&appkey=' + BILIBILI_APPKEY
-		url += '&page=' + params[:page] if(params[:page]);
+		url += '&page=' + params[:page].to_i.to_s if(params[:page]);
 		url += '&type=json'
-		url += '&pagesize=' + params[:pagesize] if(params[:pagesize] && params[:pagesize].to_i < 50);
+		url += '&pagesize=' + params[:pagesize].to_i.to_s if(params[:pagesize] && params[:pagesize].to_i < 50);
   	url += '&order=' + params[:order] if(params[:order]);
+    response = open(url).read
+    render :json => response
+  end
+  
+  def api_search
+    if !params[:keyword] || params[:keyword] == ''
+      render :text => 'errorkw'
+      return
+    end
+    url = APIURL + 'search?type=json&keyword=' + params[:keyword]
+		url += '&appkey=' + BILIBILI_APPKEY
+  	url += '&order=' + params[:order] if(params[:order]);
+  	url += '&page=' + params[:page].to_i.to_s if(params[:page]);
     response = open(url).read
     render :json => response
   end
