@@ -74,12 +74,15 @@ function setBlocksHeight(){
 				, cs = this._content.width();
 				if(this._bar == null)
 					return;
-				var f = this._ratio;
+				var f = vs / (cs+0.01);
 				if(f >= 1.0){
-					return;
-				}
-				if(pos < 0 || pos > cs - vs){
-					return;
+					pos = 0;
+				}else{
+					if(pos < 0 ){
+						pos = 0;
+					}else if(pos > cs - vs){
+						pos = cs - vs;
+					}
 				}
 				this._pos = pos;
 				var p = pos * f;
@@ -91,18 +94,23 @@ function setBlocksHeight(){
 				, cs = this._content.width();
 				this._ratio = vs / cs;
 				if(this._ratio >= 1.0){
+					bar.css('width', '0px');
 					return obj;
 				}
 				var myw = this._track.width();
 				var barw = vs / cs * myw;
 				bar.css('width', barw + 'px');
-				if(resetPos)
-					this._pos = 0;
-				else{
+				if(resetPos){
+					this._pos = 0.0;
+					this._content.css('left', '0px');
+				}else{
 					if(this._pos >= cs - vs)
 					this._pos = cs - vs - 0.01;
 				}
 				this.setPosition(this._pos);
+			},
+			getPosition: function(){
+				return this._pos;
 			}
 		};
 
@@ -169,6 +177,7 @@ function setBlocksHeight(){
 				}
 			});
 		},
+		/*
 		reinitialize: function() {
 			return this.each(function(){
 				var $this = $(this),
@@ -178,7 +187,16 @@ function setBlocksHeight(){
 				}
 			});			
 		},
-		
+		*/
+		rearrange: function() {
+			return this.each(function(){
+				var $this = $(this),
+				data = $this.data('metroblk');
+				if(data){
+					data.obj.rearrange();
+				}
+			});			
+		},		
 		
 		setVisibility: function(show, callback){
 			return this.each(function(){
@@ -255,8 +273,10 @@ function setBlocksHeight(){
 		
 		//fill shortest
 		function arrangeBlocks1(apps, rowCnt){
-			if(rowCnt==0)
-				return null;
+			if(rowCnt<=0){
+				console.error('rowCnt<=0');
+				return [];
+			}
 			var l = [];
 			var shortRow = 0;
 			var rowW = [];
@@ -264,6 +284,7 @@ function setBlocksHeight(){
 				l[i] = [];
 				rowW[i] = 0;
 			}
+			//console.log(rowCnt);
 			
 			for(var i=0;i<apps.length;i++){
 				rowW[shortRow] += apps[i].width;
@@ -275,21 +296,18 @@ function setBlocksHeight(){
 		
 		this.arrangeFunc = arrangeBlocks1;
 		
- 		this.reinitialize = function(){
-			this.oWrapper.empty();
+		this.rearrange = function(){
 			if(this._apps == null)
 				return;
 			var root = this.oWrapper;
 			var options = this.options;
 			var apps = this._apps;
-			root.css('min-height', options.tileSize + options.tileMargin * 2);
 			var totalH = root.innerHeight() ;
 			var rowCnt = Math.floor((totalH - options.tileMargin) / (options.tileSize+options.tileMargin));
-			
+		
 			//console.log('rowCnt: '+ rowCnt + ' ' + totalH);
 			var arr = this.arrangeFunc(this._apps, rowCnt);
-			//console.log(arr);
-			
+			//console.log(arr);		
 			//render the blocks
 			var maxwc = 0;
 			var m = options.tileMargin;
@@ -303,12 +321,32 @@ function setBlocksHeight(){
 					var idx = arr[row][col];
 					var wc = apps[idx].width;
 					var w  = wc * options.tileSize + (wc-1) * m;
-					var obj = $('<div class="metrosubblock"></div>').appendTo(root);
+					var obj = $('.metrosubblock:nth-child('+(idx+1)+')', root);
 					obj.width(w).height(options.tileSize);
 					obj.css('top', (m + options.tileSize) * row + m).css('left', x);
 					x += w + m;
 					cwc += wc;
-					
+				}
+				if(cwc > maxwc)
+					maxwc = cwc;
+			}
+			root.width( maxwc * (options.tileSize + m) + m);
+		}
+		
+ 		this.initialize = function(){
+			this.oWrapper.empty();
+			if(this._apps == null)
+				return;
+			var root = this.oWrapper;
+			var options = this.options;
+			var apps = this._apps;
+			root.css('min-height', options.tileSize + options.tileMargin * 2);
+
+			for(var idx=0;idx<apps.length;idx++){
+					var obj = $('<div class="metrosubblock"></div>').appendTo(root);
+					var wc = apps[idx].width;
+					var w  = wc * options.tileSize + (wc-1) * options.tileMargin;
+					obj.width(w).height(options.tileSize);
 					//event
 					//obj.css('background', apps[idx].color[0]);
 					//var bgcss = '-webkit-linear-gradient(left, '+apps[idx].color[0]+', '+apps[idx].color[1]+')';
@@ -343,11 +381,8 @@ function setBlocksHeight(){
 							return false;
 						});
 					}
-				}
-				if(cwc > maxwc)
-					maxwc = cwc;
 			}
-			root.width( maxwc * (options.tileSize + m) + m);
+		
 			
 			//preload the image
 			$('img.lazyload', root).each(function(){
@@ -370,7 +405,7 @@ function setBlocksHeight(){
 			});
 			
 			this._apps = apps;
-			//this.reinitialize();
+			this.initialize();
 			return this;			
 		}
 		
@@ -379,7 +414,7 @@ function setBlocksHeight(){
 			this.setContentObject(apps);
 		}
 		
-		this.reinitialize();
+		//this.reinitialize();
 	}
 })( jQuery );
 
@@ -395,12 +430,15 @@ function randomStyle(){
 	return 'metroblkcolor'+Math.floor(Math.random()* 7 );
 }
 
-function refreshMetro(){
+function refreshMetro(newpos){
 	setBlocksHeight();
-	$('.metroblock', $('#contentinner')).jMetroBlock('reinitialize');
+	$('.metroblock', $('#contentinner')).jMetroBlock('rearrange');
 	setInnerWidth();
-	if(scrollObj)
+	if(scrollObj){
 		scrollObj.reinitialize(true);
+		//if(newpos)
+		//	scrollObj.setPosition(newpos);
+	}
 }
 
 
@@ -461,11 +499,12 @@ var Bilibili = {
 		23: {"name": "Movie"}
 	},
 	
-	renderList: function (tid, data, insertPos){
+	renderList: function (tid, data, parentnode, insertPos){
 		var that = this;
 		function biliList2MetroApp(){
-			if(data['list']==null)
+			if(data['list']==null){
 				return [];
+			}
 				
 			//var twocnt = Math.floor(data['list'].length / 3);
 			//console.log(data);
@@ -569,11 +608,13 @@ var Bilibili = {
 			return shuffle(l);
 		}
 		
-		if(!data)
+		if(!data){
+			console.error('data empty');
 			return;
+		}
 		//console.log(data);
-		if(data['num'] < 1)
-			return;
+		//if(data['num'] < 1)
+		//	return;
 		data._tid = tid;
 		//create big block
 
@@ -601,20 +642,24 @@ var Bilibili = {
 			}
 		});
 		*/
+		if(!parentnode)
+			parentnode = '#contentinner';
 		if(!afterMe)
 			if(insertPos == 'front')
-				obj.prependTo('#contentinner');
+				obj.prependTo(parentnode);
 			else
-				obj.appendTo('#contentinner')
+				obj.appendTo(parentnode);
 		else{
 			obj.insertBefore(afterMe);
 		}
 		//setBlocksHeight();
 		obj.height($('#content').height());
-		obj.jMetroBlock('reinitialize');
+		obj.jMetroBlock('rearrange');
+		//obj.hide();
 		setInnerWidth();
+		//obj.jMetroBlock('setVisibility', true);
 		if(scrollObj)
-			scrollObj.reinitialize(true);		
+			scrollObj.reinitialize(false);		
 	},
 	
 	//channels: [1],
@@ -628,7 +673,8 @@ var Bilibili = {
 			url += '&order=' + order;
 		var that = this;
 		$.getJSON(url, function(data) {
-			that.renderList(tid, data);
+			//console.log(Bilibili.currentStartNode);
+			that.renderList(tid, data, Bilibili.currentStartNode);
 		});
 
 	},
@@ -636,16 +682,20 @@ var Bilibili = {
 	startFetchHotList: function(){
 		var that = this;
 		$.each(this.channels, function(key, value){
-			var cnt = 8 + Math.floor(Math.random()*12);
+			var cnt = 12 + Math.floor(Math.random()*12);
 			that.fetchList(key, cnt, 1, 'default');		
 		});
 	},
 	stateTable : {
 		'START':
 		{'SEARCH': function(){
-			
+			$('#hide-start').data('currentpos', scrollObj.getPosition());
 			$('.metroblock', $('#contentinner')).jMetroBlock('setVisibility', false, function(){
+				Bilibili.currentStartNode = '#hide-start';
 				$('.metroblock', $('#contentinner')).detach().prependTo('#hide-start');
+				//refreshMetro();
+				//$('#contentinner').width(0.1);
+				scrollObj.reinitialize(true);
 			});
 			$('#searchbox').show();
 		} } ,
@@ -656,11 +706,16 @@ var Bilibili = {
 			//remove all results
 			$('#contentinner').empty();
 			$('.metroblock', $('#hide-start')).detach().prependTo('#contentinner');
+			//setInnerWidth();
+			refreshMetro();
+			Bilibili.currentStartNode = '#contentinner';
+			scrollObj.setPosition($('#hide-start').data('currentpos'));
 			$('.metroblock', $('#contentinner')).jMetroBlock('setVisibility', true, function(){
-				refreshMetro();
+				
+				//scrollObj.setPosition($('#hide-start').data('currentpos'));
 			});
 			$('#searchbox').hide();
-		
+			//scrollObj.setPosition(0);
 		}},
 	},	
 	
@@ -712,13 +767,14 @@ var Bilibili = {
 			}else{
 				data.list = data.result;
 				data['name'] = 'Find';
-				that.renderList(0, data, 'front');
+				that.renderList(0, data, '#contentinner', 'front');
 			}
 		});	
 	},
 	
 	init: function(){
 		var that = this;
+		this.currentStartNode = '#contentinner';
 		$("#title").text('Start');
 		$("#searchbox").hide();
 		$('#search-text').keypress(function (e) {
@@ -751,7 +807,7 @@ $(document).ready(function(){
 	setBlocksHeight();
 	//$('.metroblock').width(400);
 	
-	$('.metroblock').jMetroBlock('reinitialize');
+	//$('.metroblock').jMetroBlock('rearrange');
 	setInnerWidth();
 	scrollObj = $('#main-scroll').jMainScroll($('#content'), $('#contentinner'));
 	

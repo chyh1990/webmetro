@@ -22,7 +22,8 @@ class BilibiliController < ApplicationController
 		url += '&type=json'
 		url += '&pagesize=' + params[:pagesize].to_i.to_s if(params[:pagesize] && params[:pagesize].to_i < 50);
   	url += '&order=' + params[:order] if(params[:order]);
-    response = open(url).read
+  	newurl = URI.parse(URI.encode(url))
+    response = open(newurl).read
     render :json => response
   end
   
@@ -35,7 +36,8 @@ class BilibiliController < ApplicationController
 		url += '&appkey=' + BILIBILI_APPKEY
   	url += '&order=' + params[:order] if(params[:order]);
   	url += '&page=' + params[:page].to_i.to_s if(params[:page]);
-    response = open(url).read
+  	newurl = URI.parse(URI.encode(url))
+    response = open(newurl).read
     render :json => response
   end
   
