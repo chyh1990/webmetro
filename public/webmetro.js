@@ -1,5 +1,35 @@
+//helper
 function getMarginOrPadding(elem, tag){
 	return parseInt(elem.css(tag).replace('px'));
+}
+
+String.prototype.trim = function()
+{
+    return this.replace(/(^[\\s]*)|([\\s]*$)/g, "");
+}
+
+function getLabel(str, len) {
+        if (str.length * 2 <= len) {
+            return str;
+        }
+        var strlen = 0;
+        var s = "";
+        for (var i = 0; i < str.length; i++) {
+            if (str.charCodeAt(i) > 128) {
+                strlen = strlen + 2;
+                if (strlen > len) {
+                    return s.substring(0, s.length - 1) + "...";
+                }
+            }
+            else {
+                strlen = strlen + 1;
+                if (strlen > len) {
+                    return s.substring(0, s.length - 2) + "...";
+                }
+            }
+            s = s + str.charAt(i);
+        }
+        return  s;
 }
 
 function getBlocksWidth(){
@@ -371,9 +401,20 @@ var Bilibili = {
 		return 'https://secure.bilibili.tv/login.php?api=http://59.66.131.21:3000/logincb&hash=' + this.PUBLIC_KEY + '&ver=2';
 	},
 	
-	channels: [ 1,3,4,5,11, 13 ],
+	//anime, music, game
+	//channels: [ 1,3,4,5,11, 13 ],
+	channels: {
+		1: {"name":"Anime", "icon": "images/anime.png"},
+		3: {"name":"Music", "icon" : 'images/music.png'},
+		4: {"name":"Game", "icon": "images/game.png"},
+		5: {"name": "Entertainment"},
+		11: {"name": "Album", "icon":"images/album.png"},
+		13: {"name": "Bangumi"},
+		23: {"name": "Movie"}
+	},
 	
 	renderList: function (tid, data){
+		var that = this;
 		function biliList2MetroApp(){
 			if(data['list']==null)
 				return [];
@@ -389,6 +430,7 @@ var Bilibili = {
 						style: randomStyle(),
 						name:  value['title'],
 						_aid:   value['aid'],
+						_bili:  value,
 						width:  1,
 						url:   'http://www.bilibili.tv/video/av' + value['aid'] + '/'
 					};
@@ -401,19 +443,62 @@ var Bilibili = {
 				return x._ranking - y._ranking;
 			});
 			
-			for(var i=0;i<cnt/3;i++){
+			for(var i=0;i<cnt/4;i++){
 				l[i].width = 2;
+			}
+			
+			for(var i=0;i<cnt;i++){
+				if(l[i].width == 1){
+					var t=Math.floor(Math.random()*2)
+					switch(t){
+						case 0:
+						l[i].style += ' metro-block-content-w1-0';
+						l[i].html = $('<img></img>').addClass('metro-block-content-w1-0').attr('src', l[i]._bili['pic'])
+								.height(160).width(160).prop('outerHTML');
+						break;
+						case 1:
+							var o = $('<div>').addClass('metro-block-content-w1-1');
+							$('<h3></h3>').text( getLabel(l[i]['name'].trim(), 40) ).addClass('video-title').appendTo(o);
+							$('<p></p>').text('Play: ' + l[i]._bili['play']).appendTo(o);
+							var datestr = l[i]._bili['create'];
+							if(datestr)
+								datestr = datestr.split(/\s+/)[0];
+							$('<p></p>').addClass('video-info').text('Time: ' + l[i]._bili['duration']).appendTo(o);
+							$('<p></p>').addClass('video-info').text('Date: ' + datestr).appendTo(o);
+							l[i].html = o.prop('outerHTML');
+					}
+					//l[i].html = '<img class="metro-block-content-w1-0" src="' + l[i]._bili['pic'] + '"></img>'
+					//l[i].html = '';
+				}else if(l[i].width == 2){
+					var o = $('<div>').addClass('metro-block-content-w2-0');
+					$('<img>').addClass('metro-block-content-w2-0-pv').attr('src', l[i]._bili['pic']).height(70).width(90).appendTo(o);
+					$('<div>').addClass('metro-block-content-w2-0-title video-title').text(l[i]['name']).appendTo(o);
+					var info = $('<div>').addClass('metro-block-content-w2-0-info video-info').appendTo(o);
+					$('<div>').addClass('metro-block-content-w2-0-info-sub').text('Time: ' + l[i]._bili['duration']).appendTo(info);
+					$('<div>').addClass('metro-block-content-w2-0-info-sub').text('Play: ' + l[i]._bili['play']).appendTo(info);
+					$('<div>').addClass('metro-block-content-w2-0-desc').text(l[i]._bili['description']).appendTo(o);
+					l[i].html = o.prop('outerHTML');
+				}
 			}
 			
 			//build titleblock
 			if(!data['name']){
 				data['name'] = '?'
 			}
+			var html = '';
+			var parent_style = "metro-title-block-text";
+			if(that.channels[tid]["icon"]){
+				html = '<img  class="metro-title-block-logo-child" src="'+that.channels[tid].icon+
+						'"></img><div class="metro-title-block-logo-child-text">'+data['name']+'</div>';
+				parent_style = "metro-title-block-logo";
+			}else{
+				html = '<div class="metro-title-block-text-child">'+data['name'].substr(0,5)+'</div>';
+			}
 			var o = {
 					_ranking: 9999,
-					style: randomStyle() + " metro-title-block",
+					style: randomStyle() + " " + parent_style,
 					name:  data['name'],
-					html: '<div class="metro-title-block-child">'+data['name'].substr(0,4)+'</div>',
+					html: html,
 					width:  2
 			};
 			l.push(o);
@@ -425,7 +510,8 @@ var Bilibili = {
 			
 			return shuffle(l);
 		}
-		
+		if(!data)
+			return;
 		//console.log(data);
 		if(data['num'] < 1)
 			return;
@@ -434,12 +520,15 @@ var Bilibili = {
 		
 		//this code make sure the order of channels is determined
 		var afterMe = null;
+		
+		/*
 		$('.metroblock', $('#contentinner')).each(function(){
 			if($(this).data('biliObj')._tid > tid){
 				afterMe = $(this);
 				return false;
 			}
 		});
+		*/
 		
 		var obj = $('<div class="metroblock"></div>')
 		if(!afterMe)
@@ -479,10 +568,11 @@ var Bilibili = {
 	},
 	
 	startFetchHotList: function(){
-		for(var i=0;i<this.channels.length;i++){
+		var that = this;
+		$.each(this.channels, function(key, value){
 			var cnt = 8 + Math.floor(Math.random()*12);
-			this.fetchList(this.channels[i], cnt, 1, 'default')
-		}
+			that.fetchList(key, cnt, 1, 'default');		
+		});
 	}
 	
 };

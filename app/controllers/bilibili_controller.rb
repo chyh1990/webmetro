@@ -7,6 +7,10 @@ class BilibiliController < ApplicationController
     return true
   end
   
+  def channels
+    render :text => 'error'
+  end
+  
   def api_list
     if !params[:tid]
       render :text => 'error'

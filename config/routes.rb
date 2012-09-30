@@ -2,6 +2,7 @@ Webmetro::Application.routes.draw do
   match "logincb" => "bilibili#login_callback"
   match 'logout'  => 'bilibili#logout'
   match 'userinfo' => 'bilibili#get_user_info'
+  match 'channels' => 'bilibili#channels'
   match 'bilibiliapi/list' => 'bilibili#api_list'
   
   # The priority is based upon order of creation:
