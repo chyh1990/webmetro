@@ -1,6 +1,6 @@
 class BilibiliController < ApplicationController
-  BILIBILI_APPKEY = 'c7d7181baa51c7e7'
-  BILIBILI_PUBLICKEY = 'efbc894df29d3be9c08940be6f480a3d'
+  BILIBILI_APPKEY = '57dc40b9ff8b6bff'
+  #BILIBILI_PUBLICKEY = 'efbc894df29d3be9c08940be6f480a3d'
   APIURL = 'http://api.bilibili.tv/'
   
   def check_hash()

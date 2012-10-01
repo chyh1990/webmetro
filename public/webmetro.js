@@ -479,12 +479,12 @@ function GetURLParameter(sParam)
 
 var Bilibili = {
 	userinfo: null,
-	PUBLIC_KEY: 'efbc894df29d3be9c08940be6f480a3d',
+	PUBLIC_KEY: '248727bcee50fc78c535a32c1a12be4a',
 	
 	state: 'START',
 	
 	getLoginURL: function(){
-		return 'https://secure.bilibili.tv/login.php?api=http://59.66.131.21:3000/logincb&hash=' + this.PUBLIC_KEY + '&ver=2';
+		return 'https://secure.bilibili.tv/login.php?api=http://bilibili.chenyh.heliohost.org/logincb&hash=' + this.PUBLIC_KEY + '&ver=2';
 	},
 	
 	//anime, music, game
