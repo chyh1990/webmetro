@@ -181,11 +181,14 @@ body{
 #main-scroll {
 	background: white;
 	opacity: 0.3;
+	filter:alpha(opacity=30);
 	height: 100%;
 }
 
 .main-scroll-bar {
 	background: black;
+	/* IE8 alpha bug */
+	filter:alpha(opacity=70);
 }
 
 .metro-title-block-text {

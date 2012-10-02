@@ -8,6 +8,18 @@ String.prototype.trim = function()
     return this.replace(/(^[\\s]*)|([\\s]*$)/g, "");
 }
 
+//IE
+if (!Array.indexOf) {
+  Array.prototype.indexOf = function (obj, start) {
+    for (var i = (start || 0); i < this.length; i++) {
+      if (this[i] == obj) {
+        return i;
+      }
+    }
+    return -1;
+  }
+}
+
 function getLabel(str, len) {
         if (str.length * 2 <= len) {
             return str;
