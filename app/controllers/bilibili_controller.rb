@@ -2,6 +2,22 @@ class BilibiliController < ApplicationController
   BILIBILI_APPKEY = '57dc40b9ff8b6bff'
   #BILIBILI_PUBLICKEY = 'efbc894df29d3be9c08940be6f480a3d'
   APIURL = 'http://api.bilibili.tv/'
+
+  require 'net/http'
+  
+  def fetch_url(url)
+    begin
+      uri = URI.parse(URI.encode(url))
+      site = Net::HTTP.new(uri.host, uri.port)  
+      site.open_timeout = 5  
+      site.read_timeout = 5
+      path = uri.query.blank? ? uri.path : uri.path+"?"+uri.query
+      p path
+      return site.get2(path,{'user-agent'=>'Mozilla/5.0'})
+    rescue
+      return 'error'
+    end  
+  end
   
   def check_hash()
     return true

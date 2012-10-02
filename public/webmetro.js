@@ -674,6 +674,10 @@ var Bilibili = {
 		var that = this;
 		$.getJSON(url, function(data) {
 			//console.log(Bilibili.currentStartNode);
+			if(!data){
+				console.error('error to fetchlist');
+				return;
+			}
 			that.renderList(tid, data, Bilibili.currentStartNode);
 		});
 
