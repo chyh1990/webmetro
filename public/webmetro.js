@@ -495,16 +495,15 @@ var Bilibili = {
 		4: {"name":"Game", "icon": "images/game.png"},
 		5: {"name": "Entertainment"},
 		11: {"name": "Album", "icon":"images/album.png"},
-		13: {"name": "Bangumi"},
+		33: {"name": "Bangumi"},
 		23: {"name": "Movie"}
 	},
 	
 	renderList: function (tid, data, parentnode, insertPos){
 		var that = this;
 		function biliList2MetroApp(){
-			if(data['list']==null){
-				return [];
-			}
+			if(data['list']==null)
+				data['list'] = {};
 				
 			//var twocnt = Math.floor(data['list'].length / 3);
 			//console.log(data);
@@ -595,7 +594,7 @@ var Bilibili = {
 					html: html,
 					width:  2,
 					onclick: function(o){
-						alert(o['name'])
+						//alert(o['name'])
 					}
 			};
 			l.push(o);
@@ -662,9 +661,32 @@ var Bilibili = {
 			scrollObj.reinitialize(false);		
 	},
 	
+	crossDomainJSON: function(url, cb){
+		$.ajax({
+		    url: url,
+		    type: 'GET',
+		    success: function(res) {
+				if(!res.data)
+					return;
+				var o = null;
+				try{
+					o = $.parseJSON(res.data.query.results.body.p);
+				}catch(err){
+					//console.log(res.data.query.result)
+					$.error(err);
+					return;
+				}
+				if(cb)
+					cb(o);
+				//that.renderList(tid, o, Bilibili.currentStartNode);
+		    }
+		});		
+	},
+	
 	//channels: [1],
 	fetchList: function(tid, pagesize, page, order){
-		var url = '/bilibiliapi/list?type=json&tid=' + tid;
+		//var url = '/bilibiliapi/list?type=json&tid=' + tid;
+		var url = 'http://api.bilibili.tv/list?type=json&tid=' + tid;
 		if(pagesize)
 			url += '&pagesize=' + pagesize;
 		if(page)
@@ -672,6 +694,7 @@ var Bilibili = {
 		if(order)
 			url += '&order=' + order;
 		var that = this;
+		/*
 		$.getJSON(url, function(data) {
 			//console.log(Bilibili.currentStartNode);
 			if(!data){
@@ -680,7 +703,11 @@ var Bilibili = {
 			}
 			that.renderList(tid, data, Bilibili.currentStartNode);
 		});
-
+		*/
+		
+		this.crossDomainJSON(url, function(o){
+			that.renderList(tid, o, Bilibili.currentStartNode);
+		});
 	},
 	
 	startFetchHotList: function(){
@@ -761,13 +788,15 @@ var Bilibili = {
 		$("#title").text('Search...');
 		this.searchCancelled = false;
 		var that = this;
-		$.getJSON('/bilibiliapi/search?keyword=' + keyword, function(data) {
+		//$.getJSON('/bilibiliapi/search?keyword=' + keyword, function(data) {
+		this.crossDomainJSON('http://api.bilibili.tv/search?keyword=' + keyword, function(data){
 			if(that.searchCancelled){
 				return;
 			}
 			$("#title").text('Search');
 			if(!data || data['code'] != 0){
-				alert('failed');
+				data['name'] = 'Fail';
+				that.renderList(0, data, '#contentinner', 'front');
 			}else{
 				data.list = data.result;
 				data['name'] = 'Find';
