@@ -112,11 +112,12 @@ body{
 	border-width: 1px;
 	border-color: 0x454545;
 	float: left;
+	padding: 2px 7px 2px 7px;
 }
 
 #searchbox .btn {
 	float: left;
-	height: 28px;
+	height: 29px;
 	margin-left: 10px;
 	border-style: solid;
 	border-width: 2px;
@@ -145,6 +146,7 @@ body{
 
 #infoblock h1 {
 	margin: 0 10px 5px 0;
+	cursor: pointer;
 }
 
 #infoblock p {

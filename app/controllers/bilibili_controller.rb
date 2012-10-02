@@ -4,6 +4,7 @@ class BilibiliController < ApplicationController
   APIURL = 'http://api.bilibili.tv/'
 
   require 'net/http'
+  require 'open-uri'
   
   def fetch_url(url)
     begin
@@ -12,11 +13,13 @@ class BilibiliController < ApplicationController
       site.open_timeout = 5  
       site.read_timeout = 5
       path = uri.query.blank? ? uri.path : uri.path+"?"+uri.query
-      p path
-      return site.get2(path,{'user-agent'=>'Mozilla/5.0'})
+      #p path
+      site.get2(path, {'user-agent'=>'Mozilla/5.0'}){|res|
+        return res.read_body
+      }
     rescue
       return 'error'
-    end  
+    end
   end
   
   def check_hash()
@@ -38,9 +41,9 @@ class BilibiliController < ApplicationController
 		url += '&type=json'
 		url += '&pagesize=' + params[:pagesize].to_i.to_s if(params[:pagesize] && params[:pagesize].to_i < 50);
   	url += '&order=' + params[:order] if(params[:order]);
-  	newurl = URI.parse(URI.encode(url))
-    response = open(newurl).read
-    render :json => response
+  	#newurl = URI.parse(URI.encode(url))
+    #response = open(newurl).read
+    render :json => fetch_url(url)
   end
   
   def api_search
